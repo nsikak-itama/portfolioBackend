@@ -10,11 +10,9 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'http://localhost:5174',
-    'https://nsikak-itama.github.io'
-  ],
+  origin: function(origin, callback) {
+    callback(null, true);
+  },
   credentials: true
 }));
 app.use(express.json());
