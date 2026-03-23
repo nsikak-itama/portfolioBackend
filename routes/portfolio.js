@@ -159,8 +159,8 @@ router.post('/upload-photo', protect, upload.single('photo'), async (req, res) =
     if (!req.file) return res.status(400).json({ message: 'No file uploaded.' });
 
     const portfolio = await Portfolio.findOne();
-    const photoUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
-    portfolio.about.photo = photoUrl;
+    const baseUrl = process.env.SERVER_URL || `${req.protocol}://${req.get('host')}`;
+    const photoUrl = `${baseUrl}/uploads/${req.file.filename}`;    portfolio.about.photo = photoUrl;
     await portfolio.save();
 
     res.json({ message: 'Photo uploaded.', photoUrl });
@@ -170,9 +170,10 @@ router.post('/upload-photo', protect, upload.single('photo'), async (req, res) =
 });
 
 router.post('/upload-project-image', protect, upload.single('image'), async (req, res) => {
-  try {
+  try { 
     if(!req.file) return res.status(400).json({message: 'No file uploaded'});
-    const imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    const baseUrl = process.env.SERVER_URL || `${req.protocol}://${req.get('host')}`;
+    const imageUrl = `${baseUrl}/uploads/${req.file.filename}`;
     res.json({message: 'Image uploaded.', imageUrl});
   } catch (err){
     res.status(500).json({message: 'Server error.'});
