@@ -1,35 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
 const Portfolio = require('../models/Portfolio');
 const { protect } = require('../middleware/auth');
+const { upload } = require('../cloudinary');
 
-// Multer config for image uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, '../uploads');
-    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname)}`;
-    cb(null, uniqueName);
-  }
-});
 
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter: (req, file, cb) => {
-    const allowed = /jpeg|jpg|png|gif|webp/;
-    const ext = allowed.test(path.extname(file.originalname).toLowerCase());
-    const mime = allowed.test(file.mimetype);
-    if (ext && mime) cb(null, true);
-    else cb(new Error('Only image files are allowed.'));
-  }
-});
 
 // ─── PUBLIC ROUTES ────────────────────────────────────────────────────────────
 
@@ -157,26 +132,21 @@ router.delete('/skills/:id', protect, async (req, res) => {
 router.post('/upload-photo', protect, upload.single('photo'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No file uploaded.' });
-
     const portfolio = await Portfolio.findOne();
-    const baseUrl = process.env.SERVER_URL || `${req.protocol}://${req.get('host')}`;
-    const photoUrl = `${baseUrl}/uploads/${req.file.filename}`;    portfolio.about.photo = photoUrl;
+    portfolio.about.photo = req.file.path;
     await portfolio.save();
-
-    res.json({ message: 'Photo uploaded.', photoUrl });
+    res.json({ message: 'Photo uploaded.', photoUrl: req.file.path });
   } catch (err) {
     res.status(500).json({ message: 'Server error.' });
   }
 });
 
 router.post('/upload-project-image', protect, upload.single('image'), async (req, res) => {
-  try { 
-    if(!req.file) return res.status(400).json({message: 'No file uploaded'});
-    const baseUrl = process.env.SERVER_URL || `${req.protocol}://${req.get('host')}`;
-    const imageUrl = `${baseUrl}/uploads/${req.file.filename}`;
-    res.json({message: 'Image uploaded.', imageUrl});
-  } catch (err){
-    res.status(500).json({message: 'Server error.'});
+  try {
+    if (!req.file) return res.status(400).json({ message: 'No file uploaded.' });
+    res.json({ message: 'Image uploaded.', imageUrl: req.file.path });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.' });
   }
 });
 
