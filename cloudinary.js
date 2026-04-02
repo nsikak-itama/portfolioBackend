@@ -16,10 +16,10 @@ cloudinary.config({
 
 const storage = new CloudinaryStorage({
   cloudinary,
-  params: {
+  params: async (req, file) => ({
     folder: 'portfolio',
     allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
-  },
+  }),
 });
 
 const upload = multer({ storage });
