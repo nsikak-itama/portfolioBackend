@@ -2,12 +2,6 @@ const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const multer = require('multer');
 
-console.log('Cloudinary config:', {
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY ? 'SET' : 'MISSING',
-  api_secret: process.env.CLOUDINARY_API_SECRET ? 'SET' : 'MISSING',
-});
-
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -15,11 +9,13 @@ cloudinary.config({
 });
 
 const storage = new CloudinaryStorage({
-  cloudinary,
-  params: async (req, file) => ({
+  cloudinary: cloudinary,
+  params: {
     folder: 'portfolio',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
-  }),
+    resource_type: 'image',
+    format: async (req, file) => 'png', // force format
+    public_id: (req, file) => Date.now() + '-' + file.originalname,
+  },
 });
 
 const upload = multer({ storage });
