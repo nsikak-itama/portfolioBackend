@@ -2,8 +2,9 @@ const express = require('express');
 const router = express.Router();
 const Portfolio = require('../models/Portfolio');
 const { protect } = require('../middleware/auth');
-const { upload } = require('../cloudinary');
-
+const multer = require('multer');
+const upload = multer({ dest: 'temp/' });
+const cloudinary = require('../cloudinary');
 
 
 // ─── PUBLIC ROUTES ────────────────────────────────────────────────────────────
@@ -132,21 +133,42 @@ router.delete('/skills/:id', protect, async (req, res) => {
 router.post('/upload-photo', protect, upload.single('photo'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No file uploaded.' });
+
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: 'portfolio',
+    });
+
     const portfolio = await Portfolio.findOne();
-    portfolio.about.photo = req.file.path;
+    portfolio.about.photo = result.secure_url;
     await portfolio.save();
-    res.json({ message: 'Photo uploaded.', photoUrl: req.file.path });
+
+    res.json({
+      message: 'Photo uploaded.',
+      photoUrl: result.secure_url,
+    });
+
   } catch (err) {
-    res.status(500).json({ message: 'Server error.' });
+    console.error(err);
+    res.status(500).json({ message: 'Upload failed.' });
   }
 });
 
 router.post('/upload-project-image', protect, upload.single('image'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No file uploaded.' });
-    res.json({ message: 'Image uploaded.', imageUrl: req.file.path });
+
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: 'portfolio',
+    });
+
+    res.json({
+      message: 'Image uploaded.',
+      imageUrl: result.secure_url,
+    });
+
   } catch (err) {
-    res.status(500).json({ message: 'Server error.' });
+    console.error(err);
+    res.status(500).json({ message: 'Upload failed.' });
   }
 });
 
